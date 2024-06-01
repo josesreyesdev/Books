@@ -32,6 +32,10 @@ public class MenuMain {
                 Integer limitNumber = getUserInput(Integer.class, "Ingresa el total de libros que deseas solicitar");
                 getBookData(searchResultData, limitNumber);
 
+                // get top {10} books con mas decargas
+                Integer topBooks = getUserInput(Integer.class, "Ingresa el TOP de libros con mas descargas que deseas ver");
+                getTopBookData(searchResultData, topBooks);
+
 
                 String exit = getUserInput(String.class, "Ingresa 'exit' para terminar ó ingrese cualquier otra letra para hacer nueva solicitud");
                 if (exit.equalsIgnoreCase("Exit")) {
@@ -43,11 +47,22 @@ public class MenuMain {
         }
     }
 
-    private void getBookData(SearchResult searchResult, Integer limitNumber) {
+    private void getTopBookData(SearchResult resultData, Integer topBooks) {
         System.out.println();
         AtomicInteger ind = new AtomicInteger(1);
-        searchResult.results().stream()
+        resultData.results().stream()
                 .sorted(Comparator.comparingInt(Book::downloadCount).reversed())
+                .limit(topBooks)
+                .forEach(book -> {
+                    System.out.println(ind.getAndIncrement() +"-> Title: " + book.title());
+                    System.out.println("--- Total descargas: " + book.downloadCount());
+                });
+    }
+
+    private void getBookData(SearchResult resultData, Integer limitNumber) {
+        System.out.println();
+        AtomicInteger ind = new AtomicInteger(1);
+        resultData.results().stream()
                 .limit(limitNumber)
                 .forEach(book -> System.out.println(ind.getAndIncrement() +"->"+ book));
     }
