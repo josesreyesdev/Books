@@ -1,12 +1,15 @@
 package com.jsr_books.books.main;
 
+import com.jsr_books.books.model.Book;
 import com.jsr_books.books.model.SearchResult;
 import com.jsr_books.books.service.ApiService;
 import com.jsr_books.books.service.ConvertData;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Comparator;
 import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MenuMain {
 
@@ -19,17 +22,18 @@ public class MenuMain {
     public void showMenu() {
         try {
             while (true) {
-                //var bookName = getUserInput("ingresa el nombre del libro a consultar: ");
-                //String encodeResultName = encodeAndResultBookName(bookName);
 
-                // get search result
+                // get search result data
                 SearchResult searchResultData = fetchResultData();
+                System.out.println();
                 System.out.println("All Data: " + searchResultData);
 
+                // get specific books for user
+                Integer limitNumber = getUserInput(Integer.class, "Ingresa el total de libros que deseas solicitar");
+                getBookData(searchResultData, limitNumber);
 
-                System.out.println();
-                System.out.println("Ingresa 'exit' para terminar ó ingrese cualquier otra letra para hacer nueva solicitud");
-                String exit = scanner.nextLine();
+
+                String exit = getUserInput(String.class, "Ingresa 'exit' para terminar ó ingrese cualquier otra letra para hacer nueva solicitud");
                 if (exit.equalsIgnoreCase("Exit")) {
                     break;
                 }
@@ -39,10 +43,19 @@ public class MenuMain {
         }
     }
 
-    private String getUserInput(String message) {
+    private void getBookData(SearchResult searchResult, Integer limitNumber) {
         System.out.println();
-        System.out.println(message);
-        return scanner.nextLine();
+        AtomicInteger ind = new AtomicInteger(1);
+        searchResult.results().stream()
+                .sorted(Comparator.comparingInt(Book::downloadCount).reversed())
+                .limit(limitNumber)
+                .forEach(book -> System.out.println(ind.getAndIncrement() +"->"+ book));
+    }
+
+    private SearchResult fetchResultData() {
+        String url = BASE_URL + "books/";
+        String json = apiService.getData(url);
+        return convertData.getData(json, SearchResult.class);
     }
 
     private String encodeAndResultBookName(String bookName) {
@@ -50,10 +63,17 @@ public class MenuMain {
         return encodedSeriesName.replace("+", "%20");
     }
 
-    private SearchResult fetchResultData() {
-        String url = BASE_URL + "books/";
-        System.out.println(url);
-        String json = apiService.getData(url);
-        return convertData.getData(json, SearchResult.class);
+    private <T> T getUserInput(Class<T> dataType, String message) {
+
+        System.out.println();
+        System.out.println(message);
+
+        if (dataType.equals(Integer.class)) {
+            return dataType.cast(scanner.nextInt());
+        } else if (dataType.equals(String.class)) {
+            scanner.nextLine(); // Limpiar el buffer antes de leer la línea
+            return dataType.cast(scanner.nextLine());
+        }
+        throw new IllegalArgumentException("Tipo de datos no soportado: " + dataType.getSimpleName());
     }
 }
