@@ -5,19 +5,15 @@ import com.jsr_books.books.model.SearchResult;
 import com.jsr_books.books.service.ApiService;
 import com.jsr_books.books.service.ConvertData;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Comparator;
-import java.util.Optional;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class MenuMain {
 
     private final ApiService apiService = new ApiService();
     private final ConvertData convertData = new ConvertData();
 
-    private final String BASE_URL = "https://gutendex.com/";
     private final Scanner scanner = new Scanner(System.in);
 
     public void showMenu() {
@@ -42,6 +38,9 @@ public class MenuMain {
                     String bookName = getUserInput(String.class, "Ingresa el nombre del libro que deseas ver: ");
                     getBookByTitle(searchResultData, bookName);
 
+                    // get statistics
+                    getStatistics(searchResultData);
+
                 } catch (Exception ex) {
                     System.out.println("Tipo de dato no valido, intenta de nuevo");
                 }
@@ -54,6 +53,18 @@ public class MenuMain {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void getStatistics(SearchResult resultData) {
+        IntSummaryStatistics est = resultData.results().stream()
+                .filter(b -> b.downloadCount() > 0)
+                .collect(Collectors.summarizingInt(Book::downloadCount));
+
+        System.out.println();
+        System.out.println("Todas las estadisiticas: " + est);
+        System.out.println("Libro con mayor descarga: " + est.getMax());
+        System.out.println("Libro con menor descarga: " + est.getMin());
+        System.out.println("Media de libros descargadas: " + est.getAverage());
     }
 
     private void getBookByTitle(SearchResult resultData, String bookName) {
@@ -92,6 +103,7 @@ public class MenuMain {
     }
 
     private SearchResult fetchResultData() {
+        String BASE_URL = "https://gutendex.com/";
         String url = BASE_URL + "books/";
         String json = apiService.getData(url);
         return convertData.getData(json, SearchResult.class);
