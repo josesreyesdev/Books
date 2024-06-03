@@ -8,6 +8,7 @@ import com.jsr_books.books.service.ConvertData;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,13 +30,21 @@ public class MenuMain {
                 System.out.println("All Data: " + searchResultData);
 
                 // get specific books for user
-                Integer limitNumber = getUserInput(Integer.class, "Ingresa el total de libros que deseas solicitar");
-                getBookData(searchResultData, limitNumber);
+                try {
+                    Integer limitNumber = getUserInput(Integer.class, "Ingresa el total de libros que deseas solicitar");
+                    getBookData(searchResultData, limitNumber);
 
-                // get top {10} books con mas decargas
-                Integer topBooks = getUserInput(Integer.class, "Ingresa el TOP de libros con mas descargas que deseas ver");
-                getTopBookData(searchResultData, topBooks);
+                    // get top {10} books con mas decargas
+                    Integer topBooks = getUserInput(Integer.class, "Ingresa el TOP de libros con mas descargas que deseas ver");
+                    getTopBookData(searchResultData, topBooks);
 
+                    // search book by title
+                    String bookName = getUserInput(String.class, "Ingresa el nombre del libro que deseas ver: ");
+                    getBookByTitle(searchResultData, bookName);
+
+                } catch (Exception ex) {
+                    System.out.println("Tipo de dato no valido, intenta de nuevo");
+                }
 
                 String exit = getUserInput(String.class, "Ingresa 'exit' para terminar ó ingrese cualquier otra letra para hacer nueva solicitud");
                 if (exit.equalsIgnoreCase("Exit")) {
@@ -47,6 +56,21 @@ public class MenuMain {
         }
     }
 
+    private void getBookByTitle(SearchResult resultData, String bookName) {
+        Optional<Book> searchBookByTitle = resultData.results().stream()
+                .filter(b -> b.title().toUpperCase().contains(bookName.toUpperCase()))
+                .findFirst();
+
+        System.out.println();
+        if (searchBookByTitle.isPresent()) {
+            System.out.println("Libro encontrado: ");
+            System.out.println("All data book: " + searchBookByTitle.get());
+            System.out.println("Title of my book: " + searchBookByTitle.get().title());
+        } else {
+            System.out.println("Libro no encontrado");
+        }
+    }
+
     private void getTopBookData(SearchResult resultData, Integer topBooks) {
         System.out.println();
         AtomicInteger ind = new AtomicInteger(1);
@@ -54,7 +78,7 @@ public class MenuMain {
                 .sorted(Comparator.comparingInt(Book::downloadCount).reversed())
                 .limit(topBooks)
                 .forEach(book -> {
-                    System.out.println(ind.getAndIncrement() +"-> Title: " + book.title());
+                    System.out.println(ind.getAndIncrement() + "-> Title: " + book.title());
                     System.out.println("--- Total descargas: " + book.downloadCount());
                 });
     }
@@ -64,18 +88,13 @@ public class MenuMain {
         AtomicInteger ind = new AtomicInteger(1);
         resultData.results().stream()
                 .limit(limitNumber)
-                .forEach(book -> System.out.println(ind.getAndIncrement() +"->"+ book));
+                .forEach(book -> System.out.println(ind.getAndIncrement() + "->" + book));
     }
 
     private SearchResult fetchResultData() {
         String url = BASE_URL + "books/";
         String json = apiService.getData(url);
         return convertData.getData(json, SearchResult.class);
-    }
-
-    private String encodeAndResultBookName(String bookName) {
-        String encodedSeriesName = URLEncoder.encode(bookName, StandardCharsets.UTF_8);
-        return encodedSeriesName.replace("+", "%20");
     }
 
     private <T> T getUserInput(Class<T> dataType, String message) {
@@ -86,9 +105,11 @@ public class MenuMain {
         if (dataType.equals(Integer.class)) {
             return dataType.cast(scanner.nextInt());
         } else if (dataType.equals(String.class)) {
-            scanner.nextLine(); // Limpiar el buffer antes de leer la línea
+            scanner.nextLine();
             return dataType.cast(scanner.nextLine());
         }
         throw new IllegalArgumentException("Tipo de datos no soportado: " + dataType.getSimpleName());
     }
+
+
 }
