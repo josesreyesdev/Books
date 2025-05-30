@@ -25,30 +25,29 @@ public class MenuMain {
 
                 // get search result data
                 SearchResult searchResultData = fetchResultData();
-                System.out.println();
-                System.out.println("All Data: " + searchResultData);
+                System.out.println("\nAll Data: " + searchResultData);
 
                 // get specific books for user
                 try {
-                    Integer limitNumber = getUserInput(Integer.class, "Ingresa el total de libros que deseas solicitar");
+                    Integer limitNumber = getUserInput(Integer.class, "Enter the total number of books you wish to view:");
                     getBookData(searchResultData, limitNumber);
 
                     // get top {10} books con mas decargas
-                    Integer topBooks = getUserInput(Integer.class, "Ingresa el TOP de libros con mas descargas que deseas ver");
+                    Integer topBooks = getUserInput(Integer.class, "Enter the TOP books with the most downloads you want to view:");
                     getTopBookData(searchResultData, topBooks);
 
                     // search book by title
-                    String bookName = getUserInput(String.class, "Ingresa el nombre del libro que deseas ver: ");
+                    String bookName = getUserInput(String.class, "Enter the name of the book you wish to view:");
                     getBookByTitle(bookName);
 
                     // get statistics
                     getStatistics(searchResultData);
 
                 } catch (Exception ex) {
-                    System.out.println("Tipo de dato no valido, intenta de nuevo");
+                    System.out.println("Data type is not valid, try again");
                 }
 
-                String exit = getUserInput(String.class, "Ingresa 'exit' para terminar ó ingrese cualquier otra letra para hacer nueva solicitud");
+                String exit = getUserInput(String.class, "Enter 'exit' to finish or enter new letter to continue");
                 if (exit.equalsIgnoreCase("Exit")) {
                     break;
                 }
@@ -63,12 +62,11 @@ public class MenuMain {
                 .filter(b -> b.downloadCount() > 0)
                 .collect(Collectors.summarizingInt(Book::downloadCount));
 
-        System.out.println();
-        System.out.println("Todas las estadisiticas: " + est);
-        System.out.println("Libro con mayor descarga: " + est.getMax());
-        System.out.println("Libro con menor descarga: " + est.getMin());
-        System.out.println("Media de libros descargadas: " + est.getAverage());
-        System.out.println("Registros evaluados para las estadisticas: " + est.getCount());
+        System.out.println("\nAll Statistics: " + est);
+        System.out.println("Book with the highest download: " + est.getMax());
+        System.out.println("Book with lower download: " + est.getMin());
+        System.out.println("Average of books downloaded: " + est.getAverage());
+        System.out.println("Total count: " + est.getCount());
     }
 
     private void getBookByTitle(String bookName) {
@@ -83,13 +81,12 @@ public class MenuMain {
                 .filter(b -> b.title().toUpperCase().contains(bookName.toUpperCase()))
                 .findFirst();
 
-        System.out.println();
         if (searchBookByTitle.isPresent()) {
-            System.out.println("Libro encontrado: ");
-            System.out.println("All data book: " + searchBookByTitle.get());
-            System.out.println("Title of my book: " + searchBookByTitle.get().title());
+            System.out.println("\nBook found: ");
+            System.out.println("All book data: " + searchBookByTitle.get());
+            System.out.println("Title book: " + searchBookByTitle.get().title());
         } else {
-            System.out.println("Libro no encontrado");
+            System.out.println("\nBook not found");
         }
     }
 
@@ -101,7 +98,7 @@ public class MenuMain {
                 .limit(topBooks)
                 .forEach(book -> {
                     System.out.println(ind.getAndIncrement() + "-> Title: " + book.title().toUpperCase());
-                    System.out.println("--- Total descargas: " + book.downloadCount());
+                    System.out.println("--- Total downloads: " + book.downloadCount());
                 });
     }
 
@@ -121,8 +118,7 @@ public class MenuMain {
 
     private <T> T getUserInput(Class<T> dataType, String message) {
 
-        System.out.println();
-        System.out.println(message);
+        System.out.println("\n" + message);
 
         if (dataType.equals(Integer.class)) {
             return dataType.cast(scanner.nextInt());
@@ -130,7 +126,7 @@ public class MenuMain {
             scanner.nextLine();
             return dataType.cast(scanner.nextLine());
         }
-        throw new IllegalArgumentException("Tipo de datos no soportado: " + dataType.getSimpleName());
+        throw new IllegalArgumentException("Data type not supported: " + dataType.getSimpleName());
     }
 
     private String encodeAndFormatSeriesName(String seriesName) {
